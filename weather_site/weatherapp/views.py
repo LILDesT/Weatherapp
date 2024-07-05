@@ -1,8 +1,8 @@
-
 from django.shortcuts import render
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from googletrans import Translator
 
 def get_weather(request):
     city = request.GET.get('city', '').strip()
@@ -26,18 +26,20 @@ def get_weather(request):
 
     try:
         response = session.get(url, headers=headers, params=params, timeout=10)
-        response.raise_for_status()  # Бросает исключение для статус-кодов 4xx/5xx
-        data = response.json()  # Преобразуем ответ в JSON-формат
+        response.raise_for_status()
+        data = response.json()
     except requests.RequestException as e:
         return render(request, 'weatherapp/weatherapp.html', {'error': f'Error fetching weather data: {str(e)}'})
 
-    # Извлечение необходимых данных
-    temperature = data.get('main', {}).get('temp', 'No data')  # Температура
-    humidity = data.get('main', {}).get('humidity', 'No data')  # Влажность
-    weather_description = data.get('weather', [{}])[0].get('description', 'No description')  # Описание погоды
+    temperature = data.get('main', {}).get('temp', 'No data')
+    humidity = data.get('main', {}).get('humidity', 'No data')
+    weather_description = data.get('weather', [{}])[0].get('description', 'No description')
+
+    translator = Translator()
+    translated_description = translator.translate(weather_description, dest='ru').text
 
     return render(request, 'weatherapp/weatherapp.html', {
-        'weather': weather_description,
+        'weather': translated_description,
         'temperature': temperature,
         'humidity': humidity,
         'city': city

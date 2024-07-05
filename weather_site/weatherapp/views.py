@@ -9,7 +9,7 @@ def get_weather(request):
     if not city:
         return render(request, 'weatherapp/weatherapp.html', {'weather': None})
 
-    api_key = '4ef1894feee89d860fe3192fa4a13997'
+    api_key = '#'
     params = {
         'q': city,
         'appid': api_key,
@@ -34,13 +34,22 @@ def get_weather(request):
     temperature = data.get('main', {}).get('temp', 'No data')
     humidity = data.get('main', {}).get('humidity', 'No data')
     weather_description = data.get('weather', [{}])[0].get('description', 'No description')
+    lat = data.get('coord', {}).get('lat', None)
+    lon = data.get('coord', {}).get('lon', None)
 
-    translator = Translator()
-    translated_description = translator.translate(weather_description, dest='ru').text
+    try:
+        translator = Translator()
+        translated_description = translator.translate(weather_description, dest='ru').text
+    except Exception as e:
+        translated_description = weather_description  # Если перевод не работает, оставляем оригинальное описание
 
-    return render(request, 'weatherapp/weatherapp.html', {
+    context = {
         'weather': translated_description,
         'temperature': temperature,
         'humidity': humidity,
-        'city': city
-    })
+        'city': city,
+        'lat': lat,
+        'lon': lon,
+        'error': None
+    }
+    return render(request, 'weatherapp/weatherapp.html', context)
